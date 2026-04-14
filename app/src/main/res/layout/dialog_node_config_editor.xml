@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/comfy_dialog_bg"
+    android:padding="24dp">
+
+    <!-- 名称输入 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="配置名称"
+        android:textColor="#999999"
+        android:textSize="13sp" />
+
+    <EditText
+        android:id="@+id/etName"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/comfy_edit_bg"
+        android:paddingHorizontal="16dp"
+        android:textColor="@color/white"
+        android:hint="输入配置名称"
+        android:textColorHint="#555555"
+        android:textSize="14sp"
+        android:inputType="text" />
+
+    <!-- 描述输入 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="描述（可选）"
+        android:textColor="#999999"
+        android:textSize="13sp"
+        android:layout_marginTop="20dp" />
+
+    <EditText
+        android:id="@+id/etDescription"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/comfy_edit_bg"
+        android:padding="16dp"
+        android:textColor="@color/white"
+        android:hint="描述此配置的用途"
+        android:textColorHint="#555555"
+        android:textSize="14sp"
+        android:gravity="top"
+        android:inputType="textMultiLine" />
+
+    <!-- 上传方式选择 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="JSON 内容来源"
+        android:textColor="#999999"
+        android:textSize="13sp"
+        android:layout_marginTop="20dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/comfy_edit_bg"
+        android:padding="4dp">
+
+        <TextView
+            android:id="@+id/rbFromFile"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:text="从文件"
+            android:textColor="@color/white"
+            android:textSize="13sp"
+            android:gravity="center"
+            android:background="@drawable/comfy_action_btn_bg"
+            android:layout_margin="4dp"
+            android:clickable="true"
+            android:focusable="true"/>
+
+        <TextView
+            android:id="@+id/rbFromPaste"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:text="粘贴 JSON"
+            android:textColor="#777777"
+            android:textSize="13sp"
+            android:gravity="center"
+            android:background="@drawable/comfy_action_btn_bg"
+            android:backgroundTint="#1AFFFFFF"
+            android:layout_margin="4dp"
+            android:clickable="true"
+            android:focusable="true"/>
+    </LinearLayout>
+
+    <!-- 文件选择区域 -->
+    <LinearLayout
+        android:id="@+id/fileSelectionArea"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/btnSelectFile"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="选择 JSON 文件"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:background="@drawable/comfy_action_btn_bg"
+            android:clickable="true"
+            android:focusable="true"/>
+
+        <TextView
+            android:id="@+id/tvSelectedFile"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="未选择文件"
+            android:textColor="#555555"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <!-- JSON 内容输入区域 -->
+    <EditText
+        android:id="@+id/etJsonContent"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/comfy_edit_bg"
+        android:padding="16dp"
+        android:textColor="@color/white"
+        android:hint="粘贴 JSON 配置内容"
+        android:textColorHint="#555555"
+        android:textSize="12sp"
+        android:gravity="top"
+        android:inputType="textMultiLine"
+        android:visibility="gone" />
+
+    <!-- 预览区域 -->
+    <TextView
+        android:id="@+id/tvPreview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="检测到的参数："
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvPreviewParams"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:visibility="gone" />
+
+</LinearLayout>

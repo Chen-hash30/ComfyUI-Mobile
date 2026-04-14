@@ -1,0 +1,699 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawerLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/comfy_bg_dark"
+    tools:context=".MainActivity">
+
+    <!-- 统一的主界面包裹层 (内容 + 浮层) -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    <!-- Main Content Area -->
+    <RelativeLayout
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- 使用可复用的 AppHeader 组件 -->
+        <com.example.demo.view.AppHeader
+            android:id="@+id/appHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <!-- Real-time Status Banner (Floating under header) -->
+        <RelativeLayout
+            android:id="@+id/statusBanner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/appHeader"
+            android:background="@drawable/comfy_status_bg"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="10dp"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="16dp"
+            android:visibility="gone">
+
+            <RelativeLayout
+                android:id="@+id/statusTopRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:id="@+id/statusLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:text="正在排队中..."
+                    android:textColor="@color/comfy_accent"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/statusPercentage"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:text="11%"
+                    android:textColor="#ACE12E"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:fontFamily="sans-serif-medium" />
+            </RelativeLayout>
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="6dp"
+                android:layout_below="@id/statusTopRow"
+                android:progressDrawable="@drawable/comfy_progress_bar" />
+
+            <TextView
+                android:id="@+id/btnCancelTask"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/progressBar"
+                android:layout_alignParentEnd="true"
+                android:layout_marginTop="12dp"
+                android:text="取消任务"
+                android:textColor="#FF4D4D"
+                android:textSize="12sp"
+                android:paddingVertical="4dp"
+                android:paddingHorizontal="8dp"
+                android:background="@drawable/comfy_action_btn_bg"
+                android:backgroundTint="#22FF4D4D" />
+        </RelativeLayout>
+
+        <ScrollView
+            android:id="@+id/mainScrollView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/statusBanner"
+            android:layout_above="@+id/bottomBar"
+            android:paddingHorizontal="20dp"
+            android:clipToPadding="false"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="40dp">
+
+                <View
+                    android:id="@+id/heroSpacer"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"/>
+
+                <!-- 结果展示 -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/resultCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardBackgroundColor="#1A1A1A"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="0dp"
+                    android:visibility="gone">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+                            <ImageView
+                                android:id="@+id/resultImage"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:adjustViewBounds="true"
+                                android:scaleType="fitCenter" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="最新生成"
+                                android:textColor="@color/comfy_accent"
+                                android:background="#80000000"
+                                android:paddingHorizontal="10dp"
+                                android:paddingVertical="4dp"
+                                android:textSize="10sp"
+                                android:layout_margin="12dp"
+                                android:layout_alignParentStart="true"
+                                android:layout_alignParentTop="true" />
+                        </RelativeLayout>
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:background="#222222"
+                            android:orientation="horizontal"
+                            android:divider="?android:attr/dividerVertical"
+                            android:showDividers="middle"
+                            android:dividerPadding="12dp">
+                            <TextView
+                                android:id="@+id/btnPreview"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:text="预览全图"
+                                android:textColor="#DDDDDD"
+                                android:textSize="12sp"
+                                android:gravity="center"/>
+                            <TextView
+                                android:id="@+id/btnDownload"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:text="保存至相册"
+                                android:textColor="#DDDDDD"
+                                android:textSize="12sp"
+                                android:gravity="center"/>
+                        </LinearLayout>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- 提示词卡片 (正向/负向) -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    app:cardBackgroundColor="#1A1A1A"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="0dp">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="20dp">
+
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="20dp">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="提示词构建"
+                                android:textColor="@color/white"
+                                android:textStyle="bold"
+                                android:textSize="18sp"/>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:text="描述你脑海中的画面"
+                                android:textColor="#555555"
+                                android:textSize="12sp"/>
+                        </RelativeLayout>
+
+                        <!-- Positive Section -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="正向提示词 (Positive)"
+                                android:textColor="#999999"
+                                android:textSize="13sp" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="推荐"
+                                android:textColor="#ACE12E"
+                                android:textSize="10sp"
+                                android:background="@drawable/comfy_tag_recommend_bg"
+                                android:paddingHorizontal="6dp"
+                                android:paddingVertical="2dp"
+                                android:layout_marginStart="8dp"/>
+                        </LinearLayout>
+
+                        <EditText
+                            android:id="@+id/etPromptPositive"
+                            android:layout_width="match_parent"
+                            android:layout_height="140dp"
+                            android:layout_marginTop="12dp"
+                            android:layout_marginBottom="20dp"
+                            android:background="@drawable/comfy_edit_bg"
+                            android:gravity="top"
+                            android:padding="16dp"
+                            android:textColor="@color/white"
+                            android:hint="描述你想要的画面内容，如场景、主体、风格、画质要求等，用逗号分隔多个描述词"
+                            android:textColorHint="#555555"
+                            android:textSize="14sp" />
+
+                        <!-- Negative Section -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="负向提示词 (Negative)"
+                                android:textColor="#999999"
+                                android:textSize="13sp" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="过滤"
+                                android:textColor="#FF4D4F"
+                                android:textSize="10sp"
+                                android:background="@drawable/comfy_tag_filter_bg"
+                                android:paddingHorizontal="6dp"
+                                android:paddingVertical="2dp"
+                                android:layout_marginStart="8dp"/>
+                        </LinearLayout>
+
+                        <EditText
+                            android:id="@+id/etPromptNegative"
+                            android:layout_width="match_parent"
+                            android:layout_height="90dp"
+                            android:layout_marginTop="12dp"
+                            android:background="@drawable/comfy_edit_bg"
+                            android:gravity="top"
+                            android:padding="16dp"
+                            android:textColor="@color/white"
+                            android:hint="输入你不希望出现的内容，如低质量元素、错误结构、干扰物等，用逗号分隔"
+                            android:textColorHint="#555555"
+                            android:textSize="14sp" />
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <!-- 参数精调卡片 (分辨率/步数/CFG/Seed) -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    app:cardBackgroundColor="#1A1A1A"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="0dp">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="20dp">
+
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="20dp">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="精调参数"
+                                android:textColor="@color/white"
+                                android:textStyle="bold"
+                                android:textSize="18sp"/>
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:text="控制生成细节"
+                                android:textColor="#555555"
+                                android:textSize="12sp"/>
+                        </RelativeLayout>
+
+                        <!-- Resolution Size -->
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="分辨率 (Size)"
+                                android:textColor="#999999"
+                                android:textSize="14sp" />
+
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical"
+                                android:background="@drawable/comfy_input_bg_rounded"
+                                android:paddingHorizontal="12dp"
+                                android:paddingVertical="8dp">
+                                <EditText
+                                    android:id="@+id/etWidth"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:background="@null"
+                                    android:text="1024"
+                                    android:textColor="@color/white"
+                                    android:gravity="center"
+                                    android:inputType="number"
+                                    android:textSize="16sp"
+                                    android:minWidth="40dp"/>
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="×"
+                                    android:textColor="#555555"
+                                    android:layout_marginHorizontal="12dp"/>
+                                <EditText
+                                    android:id="@+id/etHeight"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:background="@null"
+                                    android:text="1024"
+                                    android:textColor="@color/white"
+                                    android:gravity="center"
+                                    android:inputType="number"
+                                    android:textSize="16sp"
+                                    android:minWidth="40dp"/>
+                            </LinearLayout>
+                        </RelativeLayout>
+
+                        <!-- Presets -->
+                        <HorizontalScrollView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="20dp"
+                            android:scrollbars="none">
+                            <LinearLayout
+                                android:id="@+id/presetRow"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="512px"
+                                    android:textColor="#777777"
+                                    android:background="@drawable/comfy_action_btn_bg"
+                                    android:backgroundTint="#1AFFFFFF"
+                                    android:paddingHorizontal="16dp"
+                                    android:paddingVertical="10dp"
+                                    android:layout_marginEnd="12dp"
+                                    android:textSize="13sp"/>
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="1K (标准)"
+                                    android:textColor="@color/black"
+                                    android:background="@drawable/comfy_action_btn_bg"
+                                    android:backgroundTint="#ACE12E"
+                                    android:paddingHorizontal="16dp"
+                                    android:paddingVertical="10dp"
+                                    android:layout_marginEnd="12dp"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold"/>
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="720P"
+                                    android:textColor="#777777"
+                                    android:background="@drawable/comfy_action_btn_bg"
+                                    android:backgroundTint="#1AFFFFFF"
+                                    android:paddingHorizontal="16dp"
+                                    android:paddingVertical="10dp"
+                                    android:layout_marginEnd="12dp"
+                                    android:textSize="13sp"/>
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="1080P"
+                                    android:textColor="#777777"
+                                    android:background="@drawable/comfy_action_btn_bg"
+                                    android:backgroundTint="#1AFFFFFF"
+                                    android:paddingHorizontal="16dp"
+                                    android:paddingVertical="10dp"
+                                    android:layout_marginEnd="12dp"
+                                    android:textSize="13sp"/>
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="4K (超清)"
+                                    android:textColor="#777777"
+                                    android:background="@drawable/comfy_action_btn_bg"
+                                    android:backgroundTint="#1AFFFFFF"
+                                    android:paddingHorizontal="16dp"
+                                    android:paddingVertical="10dp"
+                                    android:layout_marginEnd="12dp"
+                                    android:textSize="13sp"/>
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="8K (极限)"
+                                    android:textColor="#777777"
+                                    android:background="@drawable/comfy_action_btn_bg"
+                                    android:backgroundTint="#1AFFFFFF"
+                                    android:paddingHorizontal="16dp"
+                                    android:paddingVertical="10dp"
+                                    android:layout_marginEnd="12dp"
+                                    android:textSize="13sp"/>
+                            </LinearLayout>
+                        </HorizontalScrollView>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="#0DFFFFFF"
+                            android:layout_marginVertical="24dp"/>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:weightSum="2"
+                            android:divider="#0DFFFFFF"
+                            android:showDividers="middle">
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="采样步数 (Steps)"
+                                    android:textColor="#999999"
+                                    android:textSize="13sp"/>
+                                <EditText
+                                    android:id="@+id/etSteps"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:text="9"
+                                    android:background="@null"
+                                    android:textColor="@color/white"
+                                    android:inputType="number"
+                                    android:textStyle="bold"
+                                    android:textSize="22sp"/>
+                            </LinearLayout>
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:paddingStart="24dp">
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="引导系数 (CFG)"
+                                    android:textColor="#999999"
+                                    android:textSize="13sp"/>
+                                <EditText
+                                    android:id="@+id/etCFG"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:text="1"
+                                    android:background="@null"
+                                    android:textColor="@color/white"
+                                    android:inputType="numberDecimal"
+                                    android:textStyle="bold"
+                                    android:textSize="22sp"/>
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="#0DFFFFFF"
+                            android:layout_marginVertical="24dp"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="随机种子 (Seed)"
+                            android:textColor="#999999"
+                            android:textSize="13sp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="52dp"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical"
+                            android:layout_marginTop="12dp"
+                            android:paddingHorizontal="4dp"
+                            android:background="@drawable/comfy_edit_bg">
+                            <EditText
+                                android:id="@+id/etSeed"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent"
+                                android:layout_weight="1"
+                                android:text="0"
+                                android:textColor="#ACE12E"
+                                android:background="@null"
+                                android:paddingHorizontal="12dp"
+                                android:inputType="number"
+                                android:textSize="15sp"/>
+                            <ImageButton
+                                android:id="@+id/btnRandomSeed"
+                                android:layout_width="44dp"
+                                android:layout_height="44dp"
+                                android:background="?attr/selectableItemBackgroundBorderless"
+                                android:src="@android:drawable/ic_menu_rotate"
+                                app:tint="#555555"/>
+                        </LinearLayout>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- Bottom Bar -->
+        <RelativeLayout
+            android:id="@+id/bottomBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/comfy_bottom_bg"
+            android:paddingHorizontal="20dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="24dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnGenerate"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:backgroundTint="#ACE12E"
+                android:text="开始生成"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:textAllCaps="false"
+                android:textStyle="bold"
+                app:cornerRadius="16dp"
+                app:rippleColor="#40000000"
+                app:elevation="4dp"
+                app:strokeWidth="0dp"/>
+        </RelativeLayout>
+    </RelativeLayout>
+
+    <!-- Overlay Layer (API Setting & Syncing) -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- Fullscreen Image Preview Overlay -->
+        <RelativeLayout
+            android:id="@+id/previewOverlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#FF000000"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone">
+        
+            <ImageView
+                android:id="@+id/ivFullscreenPreview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_centerInParent="true"
+                android:scaleType="fitCenter" />
+        
+            <ImageView
+                android:id="@+id/btnClosePreview"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_alignParentEnd="true"
+                android:layout_marginTop="32dp"
+                android:layout_marginEnd="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:padding="12dp"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                app:tint="@color/white" />
+        
+            <!-- 新增设为壁纸按钮 -->
+            <Button
+                android:id="@+id/btnSetWallpaper"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="设为壁纸"
+                android:textColor="@android:color/white"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_alignParentEnd="true"
+                android:layout_below="@id/btnClosePreview"
+                android:layout_marginEnd="16dp"
+                android:layout_marginTop="8dp"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/btnSaveImage"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="保存图片"
+                android:textColor="@android:color/white"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:layout_alignParentEnd="true"
+                android:layout_below="@id/btnSetWallpaper"
+                android:layout_marginEnd="16dp"
+                android:layout_marginTop="8dp"
+                android:visibility="gone" />
+        </RelativeLayout>
+
+    </FrameLayout>
+
+    </FrameLayout>
+
+    <!-- Side Navigation (History Drawer - 一模一样) -->
+    <LinearLayout
+        android:id="@+id/historyDrawer"
+        android:layout_width="300dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@color/comfy_bg_dark"
+        android:orientation="vertical"
+        android:clickable="true"
+        android:focusable="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="25dp"
+            android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="生成历史" android:textColor="@color/white" android:textSize="22sp" android:textStyle="bold" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="5dp"
+                android:gravity="center_vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="最近 20 条记录" android:textColor="#555555" android:textSize="11sp" android:textAllCaps="true"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text=" (长按删除)" android:textColor="@color/comfy_accent" android:textSize="11sp" android:layout_marginStart="4dp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvHistory"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:padding="15dp"
+            android:clipToPadding="false"
+            android:clickable="true"
+            android:focusable="true"/>
+    </LinearLayout>
+
+</androidx.drawerlayout.widget.DrawerLayout>

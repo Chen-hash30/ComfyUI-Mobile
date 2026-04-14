@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- ComfyUI Theme Colors 一模一样同步 -->
+    <color name="comfy_bg_dark">#121212</color>
+    <color name="comfy_bg_card_top">#2A2A2A</color>
+    <color name="comfy_bg_card_bottom">#1A1A1A</color>
+    <color name="comfy_accent">#DFFF00</color> <!-- 经典的亮黄色 -->
+    <color name="comfy_text_main">#FFFFFF</color>
+    <color name="comfy_text_sub">#AAAAAA</color>
+    <color name="comfy_input_bg">#0A0A0A</color>
+    <color name="divider_color">#1AFFFFFF</color>
+    <color name="tag_positive_bg">#1A00FF00</color>
+    <color name="tag_negative_bg">#1AFF0000</color>
+    <color name="btn_disabled">#222222</color>
+    <color name="btn_disabled_text">#444444</color>
+</resources>

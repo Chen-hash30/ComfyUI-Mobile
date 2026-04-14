@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 可复用的应用 Header 组件 - 包含状态栏占位 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/headerRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    tools:background="@color/comfy_bg_dark">
+
+    <!-- 状态栏占位 View - 用于 EdgeToEdge 适配 -->
+    <View
+        android:id="@+id/statusBarPlaceholder"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/comfy_bg_dark" />
+
+    <!-- Header Bar -->
+    <RelativeLayout
+        android:id="@+id/headerBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="64dp"
+        android:paddingHorizontal="20dp"
+        android:paddingVertical="12dp"
+        android:background="@color/comfy_bg_dark">
+
+        <!-- 左侧品牌区域 -->
+        <LinearLayout
+            android:id="@+id/headerLeft"
+            android:layout_width="wrap_content"
+            android:layout_height="64dp"
+            android:layout_alignParentStart="true"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/ivHeaderLogo"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/logo"
+                android:layout_marginEnd="8dp"
+                android:contentDescription="@string/app_name" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvHeaderBrand"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="COMFY MOBILE"
+                    android:textColor="@color/white"
+                    android:textSize="22sp"
+                    android:fontFamily="sans-serif-condensed"
+                    android:textStyle="bold|italic"
+                    android:letterSpacing="0.0" />
+
+                <LinearLayout
+                    android:id="@+id/connStatusContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="2dp"
+                    android:visibility="gone">
+
+                    <View
+                        android:id="@+id/connDot"
+                        android:layout_width="8dp"
+                        android:layout_height="8dp"
+                        android:background="@drawable/comfy_status_dot"
+                        android:backgroundTint="#FF4D4D"
+                        android:layout_marginEnd="6dp" />
+
+                    <ProgressBar
+                        android:id="@+id/connProgressBar"
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:layout_marginEnd="6dp"
+                        android:indeterminate="true"
+                        android:indeterminateTint="@color/white"
+                        android:visibility="gone"
+                        style="?android:attr/progressBarStyleSmall" />
+
+                    <TextView
+                        android:id="@+id/connStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="未连接"
+                        android:textColor="@color/comfy_text_sub"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/btnReconnect"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/comfy_action_btn_bg"
+                        android:backgroundTint="#22FFFFFF"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="2dp"
+                        android:text="重连"
+                        android:textColor="@color/white"
+                        android:textSize="9sp"
+                        android:visibility="gone" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 右侧操作按钮区域 -->
+        <LinearLayout
+            android:id="@+id/headerRight"
+            android:layout_width="wrap_content"
+            android:layout_height="64dp"
+            android:layout_alignParentEnd="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+        
+            <!-- 节点管理按钮 -->
+            <ImageButton
+                android:id="@+id/btnNodeManager"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_header_node"
+                android:background="@drawable/ic_header_btn_bg"
+                android:contentDescription="节点管理"
+                android:scaleType="centerInside"
+                android:padding="10dp"
+                android:visibility="gone"
+                android:layout_marginEnd="4dp" />
+        
+            <!-- 设置按钮 -->
+            <ImageButton
+                android:id="@+id/btnSettings"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_header_settings"
+                android:background="@drawable/ic_header_btn_bg"
+                android:contentDescription="设置"
+                android:scaleType="centerInside"
+                android:padding="10dp"
+                android:visibility="gone"
+                android:layout_marginEnd="4dp" />
+        
+            <!-- 历史记录按钮 -->
+            <ImageButton
+                android:id="@+id/btnHistory"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_header_clock"
+                android:background="@drawable/ic_header_btn_bg"
+                android:contentDescription="历史记录"
+                android:scaleType="centerInside"
+                android:padding="10dp"
+                android:visibility="gone" />
+        
+            <!-- 返回按钮（文字形式，用于需要显示文字的场景） -->
+            <TextView
+                android:id="@+id/btnBack"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="返回"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="7dp"
+                android:background="@drawable/comfy_action_btn_bg"
+                android:visibility="gone" />
+        </LinearLayout>
+    </RelativeLayout>
+</LinearLayout>
