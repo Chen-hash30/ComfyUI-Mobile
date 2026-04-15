@@ -51,7 +51,14 @@ public class NodeManagerActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
+        
+        // 强制状态栏为深色背景，图标为浅色（适配深色 Header）
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            getWindow().setStatusBarColor(getColor(R.color.comfy_bg_dark));
+            // 清除 LIGHT_STATUS_BAR 标志，确保图标始终为白色
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        }
+
         setContentView(R.layout.activity_node_manager);
 
         configManager = NodeConfigManager.getInstance(this);

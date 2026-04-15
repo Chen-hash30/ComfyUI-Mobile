@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/comfy_dialog_bg"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/tvUpdateTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="正在下载更新"
+        android:textColor="@color/comfy_text_main"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvUpdateVersion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="版本: --"
+        android:textColor="@color/comfy_text_sub"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/tvDownloadSource"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="正在尝试加速地址..."
+        android:textColor="@color/comfy_accent"
+        android:textSize="12sp" />
+
+    <ProgressBar
+        android:id="@+id/pbDownload"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="20dp"
+        android:progressDrawable="@drawable/comfy_progress_bar" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvProgressPercent"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="0%"
+            android:textColor="@color/comfy_accent"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tvDownloadSize"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="-- MB / -- MB"
+            android:textColor="@color/comfy_text_sub"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnCancelDownload"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="24dp"
+        android:background="@android:color/transparent"
+        android:text="取消下载"
+        android:textAllCaps="false"
+        android:textColor="@color/comfy_text_sub"
+        android:textSize="14sp" />
+
+</LinearLayout>
