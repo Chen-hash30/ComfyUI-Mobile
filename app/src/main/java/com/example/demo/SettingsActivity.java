@@ -77,7 +77,6 @@ public class SettingsActivity extends AppCompatActivity {
         appHeader.getTvHeaderBrand().setText("设置");
         
         // 显示返回箭头（替换 Logo 为向左箭头，同时隐藏右侧返回按钮）
-        appHeader.showBackArrow();
         
         // 设置点击监听器
         appHeader.setOnHeaderClickListener(new AppHeader.OnHeaderClickListener() {
@@ -96,6 +95,12 @@ public class SettingsActivity extends AppCompatActivity {
 
             @Override
             public void onHistoryClick() {
+            }
+
+            @Override
+            public void onChatClick() {
+                android.content.Intent intent = new android.content.Intent(SettingsActivity.this, ChatActivity.class);
+                startActivity(intent);
             }
 
             @Override

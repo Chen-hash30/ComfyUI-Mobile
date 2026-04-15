@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AI Chat</title>
+    <!-- Use CDNs for all rendering libraries to keep the app small -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+    <style>
+        :root {
+            --bg: #0D0D0D;
+            --msg-user: #262626;
+            --msg-ai: #1A1A1A;
+            --accent: #ACE12E;
+            --text: #E6E6E6;
+            --sub-text: #999999;
+        }
+        * { margin:0; padding:0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, sans-serif; padding: 12px; overflow-x: hidden; }
+        
+        #chat { display: flex; flex-direction: column; gap: 16px; padding-bottom: 20px; }
+        
+        .message { max-width: 90%; padding: 12px 16px; border-radius: 18px; line-height: 1.6; position: relative; word-wrap: break-word; font-size: 15px; }
+        .message.user { align-self: flex-end; background: var(--msg-user); color: #fff; border-bottom-right-radius: 4px; }
+        .message.ai, .message.assistant { align-self: flex-start; background: var(--msg-ai); border-bottom-left-radius: 4px; border: 1px solid #333; }
+        
+        /* Markdown / LaTeX / Highlight Styles */
+        .katex-display { overflow-x: auto; overflow-y: hidden; overflow-wrap: normal; padding: 4px 0; max-width: 100%; text-align: left; }
+        .message blockquote { border-left: 3px solid var(--accent); padding-left: 10px; color: var(--sub-text); margin: 8px 0; }
+        .message pre { background: #000; padding: 10px; border-radius: 8px; overflow-x: auto; margin: 10px 0; position: relative; }
+        .message code { font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+        .message p { margin-bottom: 8px; }
+        .message ul, .message ol { padding-left: 20px; margin-bottom: 8px; }
+        .message img { max-width: 100%; border-radius: 8px; }
+        
+        /* Mermaid Container */
+        .mermaid { background: #fff !important; border-radius: 8px; padding: 10px; margin: 10px 0; text-align: center; white-space: pre-wrap; font-family: monospace; overflow-x: auto; overflow-y: hidden; text-align: left; }
+
+        /* Copy Button for code blocks */
+        .copy-btn { position: absolute; right: 8px; top: 8px; background: rgba(255,255,255,0.1); border: none; color: var(--sub-text); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; }
+        
+        /* Think Blocks */
+        .think-block { border-left: 3px solid #444; background: #141414; border-radius: 6px; margin: 10px 0; overflow: hidden; }
+        .think-block.active { border-left-color: var(--accent); }
+        .think-header { padding: 8px 12px; font-size: 13px; color: #999; cursor: pointer; display: flex; align-items: center; background: rgba(255,255,255,0.03); user-select: none; }
+        .think-header:hover { background: rgba(255,255,255,0.06); }
+        .think-icon { margin-right: 6px; }
+        .think-content { padding: 10px 12px; font-size: 14px; color: #ccc; border-top: 1px solid rgba(255,255,255,0.05); }
+        .think-block.collapsed .think-content { display: none; }
+        .thinking-spinner { display: inline-block; width: 12px; height: 12px; margin-left: 8px; border: 2px solid var(--accent); border-right-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        /* Cursor animation for streaming */
+        .streaming::after { content: '▋'; animation: blink 1s step-end infinite; color: var(--accent); margin-left: 4px; }
+        @keyframes blink { from, to { opacity: 1; } 50% { opacity: 0; } }
+        
+        /* Scroll to bottom smoothness */
+        html { scroll-behavior: smooth; }
+    </style>
+</head>
+<body>
+    <div id="chat"></div>
+    <script>
+        const chatDiv = document.getElementById('chat');
+        mermaid.initialize({ startOnLoad: false, theme: 'neutral' });
+
+        marked.setOptions({
+            highlight: function(code, lang) {
+                const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                return hljs.highlight(code, { language }).value;
+            },
+            langPrefix: 'hljs language-'
+        });
+
+        const renderer = new marked.Renderer();
+        renderer.code = function(block) {
+            let code = typeof block === 'string' ? block : block.text;
+            let language = typeof block === 'string' ? arguments[1] : (block.lang || '');
+            if (language === 'mermaid') {
+                return `<div class="mermaid">${code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`;
+            }
+            let highlighted = code;
+            try {
+                if (language && hljs.getLanguage(language)) {
+                    highlighted = hljs.highlight(code, { language: language }).value;
+                } else {
+                    highlighted = hljs.highlightAuto(code).value;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+            return `<pre><button class="copy-btn" onclick="copyToClipboard(this)">COPY</button><code class="hljs language-${language}">${highlighted}</code></pre>`;
+        };
+        marked.use({ renderer });
+
+        function processMarkdownAndMath(text) {
+            let mathBlocks = [];
+            let preMath = text.replace(/\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)|\$[\s\S]*?\$/g, (m) => {
+                mathBlocks.push(m);
+                return `%%%MATH${mathBlocks.length - 1}%%%`;
+            });
+
+            let thinkBlocks = [];
+            let preThink = preMath.replace(/<think>([\s\S]*?)(?:<\/think>|$)/gi, (m, p1) => {
+                let isClosed = m.toLowerCase().endsWith('</think>');
+                thinkBlocks.push({ content: p1, isClosed: isClosed });
+                return `\n\n%%%THINK${thinkBlocks.length - 1}%%%\n\n`;
+            });
+
+            let html = marked.parse(preThink);
+
+            thinkBlocks.forEach((tb, i) => {
+                let tbHtml = marked.parse(tb.content);
+                let header = `<div class="think-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                    <span class="think-icon">💡</span>
+                    <span>${tb.isClosed ? '已完成深度思考' : '正在深度思考...'}</span>
+                    ${tb.isClosed ? '' : '<span class="thinking-spinner"></span>'}
+                </div>`;
+                let tbDiv = `<div class="think-block ${tb.isClosed ? 'collapsed' : 'active'}">${header}<div class="think-content">${tbHtml}</div></div>`;
+                html = html.replace(new RegExp(`<p>%%%THINK${i}%%%<\/p>`), tbDiv).replace(`%%%THINK${i}%%%`, tbDiv);
+            });
+
+            mathBlocks.forEach((m, c) => {
+                let encodedMath = m.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                html = html.split(`%%%MATH${c}%%%`).join(encodedMath);
+            });
+            return html;
+        }
+
+        function addMessage(role, text) {
+            if (role === 'assistant') role = 'ai';
+            const div = document.createElement('div');
+            div.className = `message ${role}`;
+            div.id = role === 'ai' && !text ? 'streaming-msg' : '';
+            if (role === 'ai' && !text) div.classList.add('streaming');
+            div.innerHTML = (role === 'ai' && !text) ? '' : processMarkdownAndMath(text);
+            chatDiv.appendChild(div);
+            scrollToBottom();
+            return div;
+        }
+
+        function updateStreaming(text) {
+            const div = document.getElementById('streaming-msg');
+            if (div) {
+                div.innerHTML = processMarkdownAndMath(text);
+                renderLatex(div);
+                scrollToBottom();
+            }
+        }
+
+        function endStreaming() {
+            const div = document.getElementById('streaming-msg');
+            if (div) {
+                div.id = '';
+                div.classList.remove('streaming');
+                renderMermaid();
+            }
+        }
+
+        function renderLatex(element) {
+            renderMathInElement(element, {
+                delimiters: [
+                    {left: "$$", right: "$$", display: true},
+                    {left: "$", right: "$", display: false},
+                    {left: "\\(", right: "\\)", display: false},
+                    {left: "\\[", right: "\\]", display: true}
+                ],
+                throwOnError : false
+            });
+        }
+
+        async function renderMermaid() {
+            const nodes = document.querySelectorAll('.mermaid:not([data-processed])');
+            for (let node of nodes) {
+                try {
+                    node.setAttribute('data-processed', 'pending');
+                    const id = 'mermaid-' + Math.random().toString(36).substr(2, 9);
+                    const code = node.textContent;
+                    const { svg } = await mermaid.render(id, code);
+                    node.innerHTML = svg;
+                    node.setAttribute('data-processed', 'true');
+                } catch (e) {
+                    console.error('Mermaid render error:', e);
+                    node.setAttribute('data-processed', 'error');
+                }
+            }
+        }
+
+        function scrollToBottom() {
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+
+        function copyToClipboard(btn) {
+            const pre = btn.parentElement;
+            const code = pre.querySelector('code').textContent;
+            navigator.clipboard.writeText(code);
+            btn.innerText = 'COPIED';
+            setTimeout(() => btn.innerText = 'COPY', 2000);
+        }
+
+        // Bridge functions
+        window.bridge = {
+            onReceiveMessage: (role, text) => {
+                const msg = addMessage(role, text);
+                renderLatex(msg);
+                renderMermaid();
+            },
+            onStreamStart: () => addMessage('ai', ''),
+            onStreamUpdate: (text) => updateStreaming(text),
+            onStreamEnd: () => endStreaming()
+        };
+
+        // Notify Android that WebView is ready
+        if (window.Android) window.Android.onReady();
+    </script>
+</body>
+</html>

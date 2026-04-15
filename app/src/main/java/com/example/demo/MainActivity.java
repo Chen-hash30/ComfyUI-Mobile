@@ -16,7 +16,6 @@ import android.net.Uri;
 import android.app.DownloadManager;
 import android.content.Context;
 import android.os.Environment;
-import android.view.ScaleGestureDetector;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -98,9 +97,6 @@ public class MainActivity extends AppCompatActivity {
     private NodeConfig activeConfig;
     private ApiRequestBuilder requestBuilder;
     private final Map<String, View> dynamicControls = new HashMap<>();
-    // 手势缩放相关
-    private ScaleGestureDetector scaleGestureDetector;
-    private float scaleFactor = 1.0f;
 
     @Override
     protected void onStart() {
@@ -199,23 +195,6 @@ public class MainActivity extends AppCompatActivity {
         // 设置品牌文字
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             appHeader.getTvHeaderBrand().setText(Html.fromHtml("COMFY <font color='#dfff00'>MOBILE</font>", Html.FROM_HTML_MODE_LEGACY));
-            // 初始化手势缩放检测器
-            scaleGestureDetector = new ScaleGestureDetector(this, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
-                @Override
-                public boolean onScale(ScaleGestureDetector detector) {
-                    scaleFactor *= detector.getScaleFactor();
-                    // 限制缩放范围 1.0~3.0
-                    scaleFactor = Math.max(1.0f, Math.min(scaleFactor, 3.0f));
-                    binding.ivFullscreenPreview.setScaleX(scaleFactor);
-                    binding.ivFullscreenPreview.setScaleY(scaleFactor);
-                    return true;
-                }
-            });
-            // 将触摸事件分发给手势检测器
-            binding.ivFullscreenPreview.setOnTouchListener((v, event) -> {
-                scaleGestureDetector.onTouchEvent(event);
-                return true;
-            });
             // 长按保存图片到相册（仅在全屏预览可见时）
             binding.ivFullscreenPreview.setOnLongClickListener(v -> {
                 // 确认全屏预览已显示
@@ -284,29 +263,13 @@ public class MainActivity extends AppCompatActivity {
             });
         } else {
             appHeader.getTvHeaderBrand().setText(Html.fromHtml("COMFY <font color='#dfff00'>MOBILE</font>"));
-            // 初始化手势缩放检测器
-            scaleGestureDetector = new ScaleGestureDetector(this, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
-                @Override
-                public boolean onScale(ScaleGestureDetector detector) {
-                    scaleFactor *= detector.getScaleFactor();
-                    // 限制缩放范围 1.0~3.0
-                    scaleFactor = Math.max(1.0f, Math.min(scaleFactor, 3.0f));
-                    binding.ivFullscreenPreview.setScaleX(scaleFactor);
-                    binding.ivFullscreenPreview.setScaleY(scaleFactor);
-                    return true;
-                }
-            });
-            // 将触摸事件分发给手势检测器
-            binding.ivFullscreenPreview.setOnTouchListener((v, event) -> {
-                scaleGestureDetector.onTouchEvent(event);
-                return true;
-            });
         }
 
         // 显示需要的按钮
         appHeader.showNodeManagerButton();
         appHeader.showSettingsButton();
         appHeader.showHistoryButton();
+        appHeader.setBtnChatVisible(true);
 
         // 设置点击监听器
         appHeader.setOnHeaderClickListener(new AppHeader.OnHeaderClickListener() {
@@ -329,6 +292,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onHistoryClick() {
                 binding.drawerLayout.openDrawer(GravityCompat.START);
+            }
+
+            @Override
+            public void onChatClick() {
+                Intent intent = new Intent(MainActivity.this, ChatActivity.class);
+                startActivity(intent);
             }
 
             @Override
@@ -361,10 +330,6 @@ public class MainActivity extends AppCompatActivity {
             public void handleOnBackPressed() {
                 if (binding.previewOverlay.getVisibility() == View.VISIBLE) {
                     binding.previewOverlay.setVisibility(View.GONE);
-                    // 隐藏提示并重置缩放
-                    binding.ivFullscreenPreview.setScaleX(1.0f);
-                    binding.ivFullscreenPreview.setScaleY(1.0f);
-                    scaleFactor = 1.0f;
                     // 重新打开历史抽屉
                     binding.drawerLayout.openDrawer(GravityCompat.START);
                 } else if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
@@ -419,10 +384,6 @@ public class MainActivity extends AppCompatActivity {
         // Preview Overlay Close Listeners
         binding.btnClosePreview.setOnClickListener(v -> {
             binding.previewOverlay.setVisibility(View.GONE);
-            // 隐藏提示并重置缩放
-            binding.ivFullscreenPreview.setScaleX(1.0f);
-            binding.ivFullscreenPreview.setScaleY(1.0f);
-            scaleFactor = 1.0f;
             // 隐藏设为壁纸按钮
             binding.btnSetWallpaper.setVisibility(View.GONE);
             // 隐藏保存图片按钮
@@ -1137,8 +1098,22 @@ public class MainActivity extends AppCompatActivity {
                                     });
                                 }
 
+                                // 记录当前参数
+                                JsonObject currentParams = new JsonObject();
+                                try {
+                                    currentParams.addProperty("prompt_positive", binding.etPromptPositive.getText().toString());
+                                    currentParams.addProperty("prompt_negative", binding.etPromptNegative.getText().toString());
+                                    currentParams.addProperty("width", binding.etWidth.getText().toString());
+                                    currentParams.addProperty("height", binding.etHeight.getText().toString());
+                                    currentParams.addProperty("steps", binding.etSteps.getText().toString());
+                                    currentParams.addProperty("cfg", binding.etCFG.getText().toString());
+                                    currentParams.addProperty("seed", binding.etSeed.getText().toString());
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+
                                 // 记录到历史中 (Drawer) - 使用 SharedPreferences
-                                saveToHistory(imageUrl, binding.etPromptPositive.getText().toString());
+                                saveToHistory(imageUrl, binding.etPromptPositive.getText().toString(), currentParams);
                                 currentPromptId = ""; // 防止后续重复由于执行不同阶段产生的相同 promptId 的 pollStatus 保存
                                 
                                 resetServiceStatus();
@@ -1170,185 +1145,228 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void saveToHistory(String url, String prompt) {
+        private void saveToHistory(String url, String prompt, JsonObject params) {
         android.content.SharedPreferences prefs = getSharedPreferences("comfy_history", MODE_PRIVATE);
         String historyStr = prefs.getString("items", "[]");
         JsonArray historyArray = JsonParser.parseString(historyStr).getAsJsonArray();
-        
-        // --- 去重逻辑：如果该 URL 已经存在，则将其删掉，之后再把最新的插入到最前面 ---
         JsonArray newArray = new JsonArray();
         JsonObject newItem = new JsonObject();
         newItem.addProperty("url", url);
         newItem.addProperty("prompt", prompt);
-        
+        if (params != null) newItem.add("params", params);
         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("MM-dd HH:mm:ss", java.util.Locale.getDefault());
         newItem.addProperty("time", sdf.format(new java.util.Date()));
-        
         newArray.add(newItem);
-
         for(int i = 0; i < historyArray.size(); i++) {
             JsonObject item = historyArray.get(i).getAsJsonObject();
-            if (!item.get("url").getAsString().equals(url)) {
-                if (newArray.size() < 20) {
-                    newArray.add(item);
-                }
-            }
+            if (!item.get("url").getAsString().equals(url) && newArray.size() < 100) newArray.add(item);
         }
-
         prefs.edit().putString("items", newArray.toString()).apply();
         refreshHistoryDrawer();
+    }
+
+    private void showStackPopup(String prompt) {
+        android.content.SharedPreferences prefs = getSharedPreferences("comfy_history", MODE_PRIVATE);
+        com.google.gson.JsonArray fullHistory = com.google.gson.JsonParser.parseString(prefs.getString("items", "[]")).getAsJsonArray();
+        
+        com.google.android.material.bottomsheet.BottomSheetDialog dialog = new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        androidx.recyclerview.widget.RecyclerView rv = new androidx.recyclerview.widget.RecyclerView(this);
+        rv.setLayoutManager(new androidx.recyclerview.widget.GridLayoutManager(this, 3));
+        int p = (int)(12 * getResources().getDisplayMetrics().density);
+        rv.setPadding(p, p, p, p);
+        com.google.gson.JsonArray stack = new com.google.gson.JsonArray();
+        for (com.google.gson.JsonElement e : fullHistory) {
+            if (e.getAsJsonObject().get("prompt").getAsString().equals(prompt)) stack.add(e);
+        }
+        rv.setAdapter(new androidx.recyclerview.widget.RecyclerView.Adapter<androidx.recyclerview.widget.RecyclerView.ViewHolder>() {
+            @Override public androidx.recyclerview.widget.RecyclerView.ViewHolder onCreateViewHolder(android.view.ViewGroup vg, int t) {
+                androidx.cardview.widget.CardView cv = new androidx.cardview.widget.CardView(MainActivity.this);
+                cv.setRadius(12 * getResources().getDisplayMetrics().density);
+                int s = (int)(100 * getResources().getDisplayMetrics().density);
+                android.widget.ImageView iv = new android.widget.ImageView(MainActivity.this);
+                iv.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+                cv.addView(iv, -1, -1);
+                androidx.recyclerview.widget.GridLayoutManager.LayoutParams lp = new androidx.recyclerview.widget.GridLayoutManager.LayoutParams(s, s);
+                int m = (int)(4*getResources().getDisplayMetrics().density); lp.setMargins(m,m,m,m); cv.setLayoutParams(lp);
+                return new androidx.recyclerview.widget.RecyclerView.ViewHolder(cv){};
+            }
+            @Override public void onBindViewHolder(androidx.recyclerview.widget.RecyclerView.ViewHolder h, int pos) {
+                com.google.gson.JsonObject item = stack.get(pos).getAsJsonObject();
+                com.bumptech.glide.Glide.with(MainActivity.this).load(item.get("url").getAsString()).into((android.widget.ImageView)((androidx.cardview.widget.CardView)h.itemView).getChildAt(0));
+                h.itemView.setOnClickListener(vv -> {
+                    dialog.dismiss(); binding.drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START);
+                    binding.previewOverlay.setVisibility(android.view.View.VISIBLE);
+                    binding.btnSetWallpaper.setVisibility(android.view.View.VISIBLE);
+                    binding.btnSaveImage.setVisibility(android.view.View.VISIBLE);
+                    com.bumptech.glide.Glide.with(MainActivity.this).load(item.get("url").getAsString()).into(binding.ivFullscreenPreview);
+                });
+            }
+            @Override public int getItemCount() { return stack.size(); }
+        });
+        dialog.setContentView(rv); dialog.show();
     }
 
     private void refreshHistoryDrawer() {
         android.content.SharedPreferences prefs = getSharedPreferences("comfy_history", MODE_PRIVATE);
         String historyStr = prefs.getString("items", "[]");
-        
-        // 读取时进行去重 (兼容旧数据被保存了3次的情况)
         JsonArray rawArray = JsonParser.parseString(historyStr).getAsJsonArray();
-        JsonArray historyArray = new JsonArray();
+        java.util.Map<String, JsonArray> groups = new java.util.LinkedHashMap<>();
         java.util.HashSet<String> seenUrls = new java.util.HashSet<>();
         for (int i = 0; i < rawArray.size(); i++) {
             JsonObject item = rawArray.get(i).getAsJsonObject();
             String url = item.get("url").getAsString();
             if (!seenUrls.contains(url)) {
                 seenUrls.add(url);
-                historyArray.add(item);
+                String p = item.get("prompt").getAsString();
+                if (!groups.containsKey(p)) groups.put(p, new JsonArray());
+                groups.get(p).add(item);
             }
         }
-        // 如果去重了旧数据，则覆写回去保持干净
-        if (historyArray.size() < rawArray.size()) {
-            prefs.edit().putString("items", historyArray.toString()).apply();
-        }
-
+        final java.util.Set<String> expandedPrompts = new java.util.HashSet<>();
         androidx.recyclerview.widget.RecyclerView rvHistory = findViewById(R.id.rvHistory);
-        if (rvHistory != null) {
-            rvHistory.setLayoutManager(new androidx.recyclerview.widget.GridLayoutManager(this, 2));
-            rvHistory.setAdapter(new androidx.recyclerview.widget.RecyclerView.Adapter<androidx.recyclerview.widget.RecyclerView.ViewHolder>() {
-                class HistoryViewHolder extends androidx.recyclerview.widget.RecyclerView.ViewHolder {
-                    android.widget.ImageView iv;
-                    TextView tvPrompt, tvTime;
-                    HistoryViewHolder(View layout) {
-                        super(layout);
-                        androidx.cardview.widget.CardView card = (androidx.cardview.widget.CardView) layout;
-                        android.widget.RelativeLayout rl = (android.widget.RelativeLayout) card.getChildAt(0);
-                        iv = (android.widget.ImageView) rl.getChildAt(0);
-                        
-                        LinearLayout textLayout = (LinearLayout) rl.getChildAt(1);
-                        tvPrompt = (TextView) textLayout.getChildAt(0);
-                        tvTime = (TextView) textLayout.getChildAt(1);
+        if (rvHistory == null) return;
+        rvHistory.setLayoutManager(new androidx.recyclerview.widget.GridLayoutManager(this, 2));
+        java.util.function.Supplier<JsonArray> generateList = () -> {
+            JsonArray list = new JsonArray();
+            for (java.util.Map.Entry<String, JsonArray> entry : groups.entrySet()) {
+                JsonArray group = entry.getValue();
+                if (group.size() > 1 && !expandedPrompts.contains(entry.getKey())) {
+                    JsonObject stack = group.get(0).getAsJsonObject().deepCopy();
+                    stack.addProperty("_isStack", true); stack.addProperty("_stackCount", group.size());
+                    list.add(stack);
+                } else {
+                    for (int k = 0; k < group.size(); k++) {
+                        JsonObject single = group.get(k).getAsJsonObject().deepCopy();
+                        if (group.size() > 1) single.addProperty("_isExpanded", true);
+                        list.add(single);
                     }
                 }
-
-                @androidx.annotation.NonNull
-                @Override
-                public androidx.recyclerview.widget.RecyclerView.ViewHolder onCreateViewHolder(@androidx.annotation.NonNull android.view.ViewGroup parent, int viewType) {
-                    androidx.cardview.widget.CardView card = new androidx.cardview.widget.CardView(MainActivity.this);
-                    androidx.recyclerview.widget.GridLayoutManager.LayoutParams params = new androidx.recyclerview.widget.GridLayoutManager.LayoutParams(
-                            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                            android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
-                    int margin = (int) (4 * getResources().getDisplayMetrics().density);
-                    params.setMargins(margin, margin, margin, margin);
-                    card.setLayoutParams(params);
-                    card.setRadius(12 * getResources().getDisplayMetrics().density);
-                    card.setCardBackgroundColor(Color.parseColor("#2A2A2A"));
-                    card.setCardElevation(0);
-
-                    android.widget.RelativeLayout rl = new android.widget.RelativeLayout(MainActivity.this);
-                    rl.setLayoutParams(new android.view.ViewGroup.LayoutParams(
-                            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                            android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
-
-                    android.widget.ImageView iv = new android.widget.ImageView(MainActivity.this);
-                    iv.setId(View.generateViewId());
-                    iv.setAdjustViewBounds(true);
-                    iv.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
-                    int minHeight = (int) (100 * getResources().getDisplayMetrics().density);
-                    iv.setMinimumHeight(minHeight);
-                    rl.addView(iv, new android.widget.RelativeLayout.LayoutParams(
-                            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                            android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
-
-                    LinearLayout textLayout = new LinearLayout(MainActivity.this);
-                    android.widget.RelativeLayout.LayoutParams textParams = new android.widget.RelativeLayout.LayoutParams(
-                            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                            android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
-                    textParams.addRule(android.widget.RelativeLayout.BELOW, iv.getId());
-                    textLayout.setLayoutParams(textParams);
-                    textLayout.setOrientation(LinearLayout.VERTICAL);
-                    int padding = (int) (8 * getResources().getDisplayMetrics().density);
-                    textLayout.setPadding(padding, padding, padding, padding);
-
-                    TextView tvPrompt = new TextView(MainActivity.this);
-                    tvPrompt.setTextColor(Color.WHITE);
-                    tvPrompt.setTextSize(10);
-                    tvPrompt.setMaxLines(2);
-                    tvPrompt.setEllipsize(android.text.TextUtils.TruncateAt.END);
-                    textLayout.addView(tvPrompt);
-
-                    TextView tvTime = new TextView(MainActivity.this);
-                    tvTime.setTextColor(Color.parseColor("#999999"));
-                    tvTime.setTextSize(8);
-                    tvTime.setPadding(0, (int)(4*getResources().getDisplayMetrics().density), 0, 0);
-                    textLayout.addView(tvTime);
-
-                    rl.addView(textLayout);
-
-                    card.addView(rl);
-
-                    return new HistoryViewHolder(card);
+            }
+            return list;
+        };
+        final JsonArray[] displayList = {generateList.get()};
+        rvHistory.setAdapter(new androidx.recyclerview.widget.RecyclerView.Adapter<androidx.recyclerview.widget.RecyclerView.ViewHolder>() {
+            class Holder extends androidx.recyclerview.widget.RecyclerView.ViewHolder {
+                ImageView iv; TextView tvP, tvT, tvC; View retry, stack1, stack2;
+                Holder(View v) {
+                    super(v);
+                    stack1 = v.findViewWithTag("s1"); stack2 = v.findViewWithTag("s2");
+                    androidx.cardview.widget.CardView card = v.findViewWithTag("main_card");
+                    android.widget.RelativeLayout rl = (android.widget.RelativeLayout) card.getChildAt(0);
+                    iv = (ImageView) rl.getChildAt(0);
+                    LinearLayout tl = (LinearLayout) rl.getChildAt(1);
+                    tvP = (TextView) tl.getChildAt(0); tvT = (TextView) tl.getChildAt(1);
+                    tvC = (TextView) rl.findViewWithTag("c");
+                    retry = rl.findViewWithTag("r");
                 }
+            }
+            @Override
+            public androidx.recyclerview.widget.RecyclerView.ViewHolder onCreateViewHolder(android.view.ViewGroup p, int t) {
+                float density = getResources().getDisplayMetrics().density;
+                int m = (int)(6*density);
+                android.widget.FrameLayout root = new android.widget.FrameLayout(MainActivity.this);
+                androidx.recyclerview.widget.GridLayoutManager.LayoutParams lp = new androidx.recyclerview.widget.GridLayoutManager.LayoutParams(-1, -2);
+                lp.setMargins(m,m,m,m); root.setLayoutParams(lp); root.setClipChildren(false); root.setClipToPadding(false);
 
-                @Override
-                public void onBindViewHolder(@androidx.annotation.NonNull androidx.recyclerview.widget.RecyclerView.ViewHolder holder, int position) {
-                    HistoryViewHolder h = (HistoryViewHolder) holder;
-                    JsonObject item = historyArray.get(position).getAsJsonObject();
-                    h.iv.setOnClickListener(v -> {
-                        // 关闭抽屉
+                View s2 = new View(MainActivity.this); s2.setTag("s2");
+                android.widget.FrameLayout.LayoutParams s2p = new android.widget.FrameLayout.LayoutParams(-1, (int)(135*density));
+                s2.setLayoutParams(s2p); android.graphics.drawable.GradientDrawable g2 = new android.graphics.drawable.GradientDrawable(); g2.setColor(Color.parseColor("#1A1A1A")); g2.setCornerRadius(12*density);
+                s2.setBackground(g2); s2.setRotation(5f); s2.setTranslationY(2*density); root.addView(s2);
+
+                View s1 = new View(MainActivity.this); s1.setTag("s1");
+                android.widget.FrameLayout.LayoutParams s1p = new android.widget.FrameLayout.LayoutParams(-1, (int)(135*density));
+                s1.setLayoutParams(s1p); android.graphics.drawable.GradientDrawable g1 = new android.graphics.drawable.GradientDrawable(); g1.setColor(Color.parseColor("#222222")); g1.setCornerRadius(12*density);
+                s1.setBackground(g1); s1.setRotation(-4f); root.addView(s1);
+
+                androidx.cardview.widget.CardView card = new androidx.cardview.widget.CardView(MainActivity.this);
+                card.setTag("main_card"); card.setRadius(12*density); card.setCardBackgroundColor(Color.parseColor("#2A2A2A"));
+                card.setCardElevation(4*density);
+                android.widget.RelativeLayout rl = new android.widget.RelativeLayout(MainActivity.this);
+                
+                ImageView iv = new ImageView(MainActivity.this); iv.setId(View.generateViewId()); iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                iv.setMinimumHeight((int)(100*density));
+                rl.addView(iv, new android.widget.RelativeLayout.LayoutParams(-1, (int)(105*density)));
+
+                LinearLayout tl = new LinearLayout(MainActivity.this); tl.setOrientation(LinearLayout.VERTICAL); tl.setPadding((int)(8*density),(int)(6*density),(int)(32*density),(int)(6*density));
+                android.widget.RelativeLayout.LayoutParams tp = new android.widget.RelativeLayout.LayoutParams(-1,-2); tp.addRule(android.widget.RelativeLayout.BELOW, iv.getId());
+                tl.setLayoutParams(tp);
+                TextView tpv = new TextView(MainActivity.this); tpv.setTextColor(-1); tpv.setTextSize(10); tpv.setMaxLines(1); tpv.setEllipsize(android.text.TextUtils.TruncateAt.END); tl.addView(tpv);
+                TextView ttv = new TextView(MainActivity.this); ttv.setTextColor(Color.parseColor("#777777")); ttv.setTextSize(8); tl.addView(ttv);
+                rl.addView(tl);
+
+                TextView cv = new TextView(MainActivity.this); cv.setTag("c"); cv.setTextColor(-1); cv.setTextSize(10); cv.setTypeface(null, android.graphics.Typeface.BOLD);
+                android.graphics.drawable.GradientDrawable cb = new android.graphics.drawable.GradientDrawable(); cb.setColor(Color.parseColor("#CC000000")); cb.setCornerRadius(8*density);
+                cv.setBackground(cb); cv.setPadding((int)(8*density),(int)(2*density),(int)(8*density),(int)(2*density));
+                android.widget.RelativeLayout.LayoutParams cp = new android.widget.RelativeLayout.LayoutParams(-2,-2); cp.addRule(android.widget.RelativeLayout.ALIGN_TOP, iv.getId()); cp.addRule(android.widget.RelativeLayout.ALIGN_RIGHT, iv.getId());
+                cp.setMargins(0, (int)(6*density), (int)(6*density), 0); cv.setLayoutParams(cp); rl.addView(cv);
+
+                android.widget.FrameLayout rf = new android.widget.FrameLayout(MainActivity.this); rf.setTag("r");
+                android.widget.RelativeLayout.LayoutParams rfp = new android.widget.RelativeLayout.LayoutParams((int)(26*density), (int)(26*density));
+                rfp.addRule(android.widget.RelativeLayout.ALIGN_PARENT_BOTTOM); rfp.addRule(android.widget.RelativeLayout.ALIGN_PARENT_RIGHT);
+                rfp.setMargins(0,0,(int)(4*density),(int)(4*density)); rf.setLayoutParams(rfp);
+                android.graphics.drawable.GradientDrawable rbg = new android.graphics.drawable.GradientDrawable(); rbg.setShape(android.graphics.drawable.GradientDrawable.OVAL); rbg.setColor(Color.parseColor("#22FFFFFF"));
+                rf.setBackground(rbg);
+                ImageView ri = new ImageView(MainActivity.this); ri.setImageResource(android.R.drawable.ic_menu_revert); ri.setColorFilter(Color.parseColor("#DFFF00"));
+                int p2 = (int)(6*density); ri.setPadding(p2,p2,p2,p2); rf.addView(ri);
+                rl.addView(rf);
+
+                card.addView(rl); root.addView(card); return new Holder(root);
+            }
+
+            @Override
+            public void onBindViewHolder(androidx.recyclerview.widget.RecyclerView.ViewHolder h, int pos) {
+                Holder holder = (Holder)h; JsonObject item = displayList[0].get(pos).getAsJsonObject();
+                String p = item.get("prompt").getAsString(); boolean isS = item.has("_isStack");
+                holder.tvC.setVisibility(isS ? View.VISIBLE : View.GONE);
+                holder.stack1.setVisibility(isS ? View.VISIBLE : View.GONE);
+                holder.stack2.setVisibility(isS ? View.VISIBLE : View.GONE);
+                if(isS) holder.tvC.setText(String.valueOf(item.get("_stackCount").getAsInt()));
+                Glide.with(MainActivity.this).load(item.get("url").getAsString()).into(holder.iv);
+                holder.tvP.setText(p); holder.tvT.setText(item.has("time") ? item.get("time").getAsString() : "Just now");
+                holder.iv.setOnClickListener(v -> {
+                    if(isS) {
+                        holder.itemView.animate().scaleX(0.9f).scaleY(0.9f).rotationY(90).setDuration(250).withEndAction(() -> {
+                            showStackPopup(p); holder.itemView.setRotationY(-90);
+                            holder.itemView.animate().scaleX(1.0f).scaleY(1.0f).rotationY(0).setDuration(250).start();
+                        }).start();
+                    } else {
+                        binding.drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START); binding.previewOverlay.setVisibility(View.VISIBLE);
+                        binding.btnSetWallpaper.setVisibility(View.VISIBLE); binding.btnSaveImage.setVisibility(View.VISIBLE);
+                        Glide.with(MainActivity.this).load(item.get("url").getAsString()).into(binding.ivFullscreenPreview);
+                    }
+                });
+                holder.retry.setOnClickListener(v -> {
+                    if(item.has("params")) {
+                        JsonObject pa = item.getAsJsonObject("params");
+                        if(pa.has("prompt_positive")) binding.etPromptPositive.setText(pa.get("prompt_positive").getAsString());
+                        if(pa.has("prompt_negative")) binding.etPromptNegative.setText(pa.get("prompt_negative").getAsString());
+                        if(pa.has("width")) binding.etWidth.setText(pa.get("width").getAsString());
+                        if(pa.has("height")) binding.etHeight.setText(pa.get("height").getAsString());
+                        if(pa.has("steps")) binding.etSteps.setText(pa.get("steps").getAsString());
+                        if(pa.has("cfg")) binding.etCFG.setText(pa.get("cfg").getAsString());
+                        if(pa.has("seed")) binding.etSeed.setText(pa.get("seed").getAsString());
+                        Toast.makeText(MainActivity.this, "已填入参数", 0).show();
                         binding.drawerLayout.closeDrawer(GravityCompat.START);
-                        
-                        binding.previewOverlay.setVisibility(View.VISIBLE);
-                        // 显示缩放提示
-                        // 显示设为壁纸按钮
-                        binding.btnSetWallpaper.setVisibility(View.VISIBLE);
-                        // 显示保存图片按钮
-                        binding.btnSaveImage.setVisibility(View.VISIBLE);
-                        Glide.with(MainActivity.this)
-                             .load(item.get("url").getAsString())
-                             .into(binding.ivFullscreenPreview);
-                    });
-                    
-                    h.iv.setOnLongClickListener(v -> {
-                        new android.app.AlertDialog.Builder(MainActivity.this)
-                            .setTitle("确认删除")
-                            .setMessage("确定要删除这条生成历史吗？")
-                            .setPositiveButton("删除", (dialog, which) -> {
-                                int adapterPos = holder.getAdapterPosition();
-                                if (adapterPos != androidx.recyclerview.widget.RecyclerView.NO_POSITION) {
-                                    // 从本地 JSON 列表中删除
-                                    historyArray.remove(adapterPos);
-                                    prefs.edit().putString("items", historyArray.toString()).apply();
-                                    if (rvHistory.getAdapter() != null) {
-                                        rvHistory.getAdapter().notifyItemRemoved(adapterPos);
-                                        rvHistory.getAdapter().notifyItemRangeChanged(adapterPos, historyArray.size() - adapterPos);
-                                    }
+                    }
+                });
+                holder.iv.setOnLongClickListener(v -> {
+                    new android.app.AlertDialog.Builder(MainActivity.this).setTitle("确认删除").setMessage("确定删除吗？")
+                        .setPositiveButton("删除", (d, w) -> {
+                            android.content.SharedPreferences prefsFix = getSharedPreferences("comfy_history", MODE_PRIVATE);
+                            JsonArray currentArray = JsonParser.parseString(prefsFix.getString("items", "[]")).getAsJsonArray();
+                            JsonArray newFiltered = new JsonArray();
+                            for(int i=0; i<currentArray.size(); i++) {
+                                if(!currentArray.get(i).getAsJsonObject().get("url").getAsString().equals(item.get("url").getAsString())) {
+                                    newFiltered.add(currentArray.get(i));
                                 }
-                            })
-                            .setNegativeButton("取消", null)
-                            .show();
-                        return true;
-                    });
-
-                    Glide.with(MainActivity.this).load(item.get("url").getAsString()).into(h.iv);
-                    h.tvPrompt.setText(item.get("prompt").getAsString());
-                    h.tvTime.setText(item.has("time") ? item.get("time").getAsString() : "");
-                }
-
-                @Override
-                public int getItemCount() {
-                    return historyArray.size();
-                }
-            });
-        }
+                            }
+                            prefsFix.edit().putString("items", newFiltered.toString()).apply(); refreshHistoryDrawer();
+                        }).setNegativeButton("取消", null).show();
+                    return true;
+                });
+            }
+            @Override public int getItemCount() { return displayList[0].size(); }
+        });
     }
 
     private void saveImageToGallery(Bitmap bitmap) {

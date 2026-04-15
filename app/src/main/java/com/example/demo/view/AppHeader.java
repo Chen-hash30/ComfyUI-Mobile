@@ -29,7 +29,6 @@ public class AppHeader extends FrameLayout {
     private View headerBar;
     private LinearLayout headerLeft;
     private LinearLayout headerRight;
-    private ImageView ivHeaderLogo;
     private TextView tvHeaderBrand;
     private LinearLayout connStatusContainer;
     private View connDot;
@@ -39,6 +38,7 @@ public class AppHeader extends FrameLayout {
     private ImageButton btnNodeManager;
     private ImageButton btnSettings;
     private ImageButton btnHistory;
+    private ImageButton btnChat;
     private TextView btnBack;
 
     // 点击事件监听器
@@ -49,6 +49,7 @@ public class AppHeader extends FrameLayout {
         void onNodeManagerClick();
         void onSettingsClick();
         void onHistoryClick();
+        void onChatClick();
         void onReconnectClick();
     }
 
@@ -79,7 +80,6 @@ public class AppHeader extends FrameLayout {
         headerBar = findViewById(R.id.headerBar);
         headerLeft = findViewById(R.id.headerLeft);
         headerRight = findViewById(R.id.headerRight);
-        ivHeaderLogo = findViewById(R.id.ivHeaderLogo);
         tvHeaderBrand = findViewById(R.id.tvHeaderBrand);
         connStatusContainer = findViewById(R.id.connStatusContainer);
         connDot = findViewById(R.id.connDot);
@@ -89,6 +89,7 @@ public class AppHeader extends FrameLayout {
         btnNodeManager = findViewById(R.id.btnNodeManager);
         btnSettings = findViewById(R.id.btnSettings);
         btnHistory = findViewById(R.id.btnHistory);
+        btnChat = findViewById(R.id.btnChat);
         btnBack = findViewById(R.id.btnBack);
     }
 
@@ -155,7 +156,13 @@ public class AppHeader extends FrameLayout {
                 onHeaderClickListener.onHistoryClick();
             }
         });
-        
+
+        btnChat.setOnClickListener(v -> {
+            if (onHeaderClickListener != null) {
+                onHeaderClickListener.onChatClick();
+            }
+        });
+
         btnReconnect.setOnClickListener(v -> {
             if (onHeaderClickListener != null) {
                 onHeaderClickListener.onReconnectClick();
@@ -178,11 +185,6 @@ public class AppHeader extends FrameLayout {
         }
     }
 
-    public void setLogoResource(int resId) {
-        if (ivHeaderLogo != null) {
-            ivHeaderLogo.setImageResource(resId);
-        }
-    }
 
     // ==================== 连接状态设置 ====================
 
@@ -305,6 +307,12 @@ public class AppHeader extends FrameLayout {
             btnBack.setVisibility(View.GONE);
         }
     }
+
+    public void setBtnChatVisible(boolean visible) {
+        if (btnChat != null) {
+            btnChat.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
+    }
     
     public void setBackButtonText(String text) {
         if (btnBack != null) {
@@ -314,46 +322,6 @@ public class AppHeader extends FrameLayout {
     
     // ==================== Logo 显示控制 ====================
     
-    /**
-     * 显示 Logo 图片
-     */
-    public void showLogo() {
-        if (ivHeaderLogo != null) {
-            ivHeaderLogo.setVisibility(View.VISIBLE);
-            // 恢复为原始 logo
-            ivHeaderLogo.setImageResource(R.drawable.logo);
-        }
-    }
-    
-    /**
-     * 隐藏 Logo 图片
-     */
-    public void hideLogo() {
-        if (ivHeaderLogo != null) {
-            ivHeaderLogo.setVisibility(View.GONE);
-        }
-    }
-    
-    /**
-     * 显示返回箭头（替换 Logo 为向左箭头）
-     * 同时隐藏右侧的返回按钮
-     */
-    public void showBackArrow() {
-        if (ivHeaderLogo != null) {
-            ivHeaderLogo.setVisibility(View.VISIBLE);
-            ivHeaderLogo.setImageResource(R.drawable.ic_arrow_back);
-            // 设置点击事件为返回
-            ivHeaderLogo.setOnClickListener(v -> {
-                if (onHeaderClickListener != null) {
-                    onHeaderClickListener.onBackClick();
-                }
-            });
-        }
-        // 隐藏右侧的返回按钮
-        if (btnBack != null) {
-            btnBack.setVisibility(View.GONE);
-        }
-    }
     
     // ==================== 按钮图标自定义 ====================
     
