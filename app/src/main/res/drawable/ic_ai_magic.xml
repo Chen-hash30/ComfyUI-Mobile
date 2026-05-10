@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    
+    <!-- 大四角星 (Sparkle) - 精致版 -->
+    <path
+        android:pathData="M12,0L14.5,9.5L24,12L14.5,14.5L12,24L9.5,14.5L0,12L9.5,9.5Z"
+        android:fillColor="#ACE12E"/>
+    
+    <!-- 小四角星 - 位置上移 -->
+    <path
+        android:pathData="M19,2L20.2,5.8L24,7L20.2,8.2L19,12L17.8,8.2L14,7L17.8,5.8Z"
+        android:fillColor="#ACE12E"
+        android:fillAlpha="0.6"/>
+</vector>

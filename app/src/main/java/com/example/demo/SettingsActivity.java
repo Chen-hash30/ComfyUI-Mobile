@@ -12,6 +12,7 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
+import android.util.Log;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -383,11 +384,25 @@ public class SettingsActivity extends AppCompatActivity {
             tvUpdateStatus.setText("无效的版本信息");
             return;
         }
+        
+        // 统一版本号格式：去除前缀 "v"、空格、换行符
+        String normalizedRemote = remoteVersion.trim().replace(" ", "");
+        if (normalizedRemote.startsWith("v") || normalizedRemote.startsWith("V")) {
+            normalizedRemote = normalizedRemote.substring(1);
+        }
+        
+        String normalizedCurrent = currentVersion.trim().replace(" ", "");
+        if (normalizedCurrent.startsWith("v") || normalizedCurrent.startsWith("V")) {
+            normalizedCurrent = normalizedCurrent.substring(1);
+        }
+
+        Log.d("Settings", "版本对比: 本地=" + normalizedCurrent + ", 远程=" + normalizedRemote);
     
-        if (remoteVersion.equals(currentVersion)) {
-            tvUpdateStatus.setText("当前已是最新版本");
-            Toast.makeText(this, "已经是最新版", Toast.LENGTH_SHORT).show();
-        } else {
+        // 使用语义化版本号比较
+        int comparison = compareVersions(normalizedRemote, normalizedCurrent);
+        
+        if (comparison > 0) {
+            // 远程版本 > 本地版本 → 有新版本
             tvUpdateStatus.setText("发现新版本: " + remoteVersion);
             tvUpdateStatus.setTextColor(0xFFACE12E); // 亮绿色显示有更新
     
@@ -416,6 +431,44 @@ public class SettingsActivity extends AppCompatActivity {
             });
 
             confirmDialog.show();
+        } else if (comparison < 0) {
+            // 远程版本 < 本地版本 → 本地已是最新（可能是开发版/测试版）
+            tvUpdateStatus.setText("当前已是最新版本 (" + normalizedCurrent + ")");
+            tvUpdateStatus.setTextColor(0xFF888888); // 灰色显示
+            Toast.makeText(this, "当前版本比远程更新", Toast.LENGTH_SHORT).show();
+        } else {
+            // 版本完全相同
+            tvUpdateStatus.setText("当前已是最新版本 v" + normalizedCurrent);
+            tvUpdateStatus.setTextColor(0xFF888888); // 灰色显示
+            Toast.makeText(this, "已经是最新版", Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    /**
+     * 比较两个语义化版本号
+     * @return 正数表示 v1 > v2，负数表示 v1 < v2，0 表示相等
+     */
+    private int compareVersions(String v1, String v2) {
+        try {
+            // 分割版本号为数字数组：如 "0.0.6" → [0, 0, 6]
+            String[] parts1 = v1.split("\\.");
+            String[] parts2 = v2.split("\\.");
+            
+            int length = Math.max(parts1.length, parts2.length);
+            
+            for (int i = 0; i < length; i++) {
+                int num1 = i < parts1.length ? Integer.parseInt(parts1[i].replaceAll("[^0-9]", "")) : 0;
+                int num2 = i < parts2.length ? Integer.parseInt(parts2[i].replaceAll("[^0-9]", "")) : 0;
+                
+                if (num1 > num2) return 1;
+                if (num1 < num2) return -1;
+            }
+            
+            return 0; // 完全相等
+        } catch (Exception e) {
+            Log.e("Settings", "版本号解析失败: " + e.getMessage());
+            // 解析失败时回退到字符串比较
+            return v1.compareTo(v2);
         }
     }
 
